@@ -8,6 +8,7 @@ export default async(req, res) => {
 	const authorization =  req.headers.authorization.split(' ')[1];
 	const crypto = require("crypto");
 	const key = req.body.key;
+	const userkey = req.body.userkey;
 	const cleartext = req.body.text;
 	if (authorization != token) {
 		return res.status(401).json({ message: 'Invalid Authentication Credentials' });
@@ -20,12 +21,10 @@ export default async(req, res) => {
 		return res.status(401).json({ message: 'Provided CLEARTEXT must be a non-empty string' });
 	}
 
-	const hash = crypto.createHash("sha256");
-	hash.update(key);
+	const hash = crypto.scryptSync(key, userkey, 32);
 
-	// Initialization Vector
 	const iv = crypto.randomBytes(16);
-	const cipher = crypto.createCipheriv("aes-256-gcm", hash.digest(), iv);
+	const cipher = crypto.createCipheriv("aes-256-gcm", hash, iv);
 
 	const ciphertext = Buffer.concat([
 		cipher.update(Buffer.from(cleartext), "utf8"),

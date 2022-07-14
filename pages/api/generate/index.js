@@ -10,9 +10,6 @@ export default async(req, res) => {
 	if (authorization != token) {
 		return res.status(401).json({ message: 'Invalid Authentication Credentials' });
 	}
-	const ecdh = crypto.createECDH("secp521r1");
-    ecdh.generateKeys();
-    const PublicKey = ecdh.getPublicKey('hex');
-    const PrivateKey = ecdh.getPrivateKey('hex');
-	res.status(200).send(JSON.stringify({"PublicKey": PublicKey, "PrivateKey": PrivateKey}));
+	const key = crypto.randomBytes(32).toString('hex');
+	res.status(200).send(key);
 }

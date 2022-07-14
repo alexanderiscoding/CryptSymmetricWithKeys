@@ -8,6 +8,7 @@ export default async(req, res) => {
 	const authorization =  req.headers.authorization.split(' ')[1];
 	const crypto = require("crypto");
 	const key = req.body.key;
+	const userkey = req.body.userkey;
 	const encryptedText = req.body.text;
 	if (authorization != token) {
 		return res.status(401).json({ message: 'Invalid Authentication Credentials' });
@@ -22,17 +23,15 @@ export default async(req, res) => {
 
 	const encryptedBuffer = Buffer.from(encryptedText, "base64");
 
-	const hash = crypto.createHash("sha256");
-	hash.update(key);
+	const hash = crypto.scryptSync(key, userkey, 32);
 
 	if (encryptedBuffer.length < 17) {
 		return res.status(401).json({ message: 'Provided ENCRYPTEDTEXT must decrypt to a non-empty string' });
 	}
 
-	// Initialization Vector
 	const iv = encryptedBuffer.slice(0, 16);
 	const authTag = encryptedBuffer.slice(16, 32);
-	const decipher = crypto.createDecipheriv("aes-256-gcm", hash.digest(), iv);
+	const decipher = crypto.createDecipheriv("aes-256-gcm", hash, iv);
 	decipher.setAuthTag(authTag);
 	const cipherText = decipher.update(
 		encryptedBuffer.slice(32),
